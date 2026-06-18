@@ -8,7 +8,7 @@
     "dev:down": "docker compose down -v",
     "dev:logs": "docker compose logs -f",
     "db:migrate": "docker compose run --rm flyway migrate",
-    "db:seed": "cmd /c \"docker compose exec -T db psql -U postgres -d setadam < db/seeds/demo_data.sql\"",
+    "db:seed": "docker compose exec -T db psql -U postgres -d setadam < db/seeds/demo_data.sql",
     "db:import": "python scripts/import-open-images-v7.py",
     "dev:go": "cd services/core-go && go run cmd/server/main.go",
     "dev:node": "npm --prefix apps/graphql-node run dev",
