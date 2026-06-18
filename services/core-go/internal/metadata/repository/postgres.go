@@ -135,7 +135,7 @@ func (r *postgresRepository) ListByFolder(ctx context.Context, folderID string) 
 	}
 	defer rows.Close()
 
-	var list []*domain.Metadata
+	list := make([]*domain.Metadata, 0)
 	for rows.Next() {
 		m := &domain.Metadata{}
 		var metaJSONBytes []byte

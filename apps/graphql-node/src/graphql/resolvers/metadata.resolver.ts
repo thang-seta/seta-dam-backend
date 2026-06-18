@@ -3,7 +3,8 @@ import { GoServiceClient } from '../../clients/go-service.client';
 export const metadataResolvers = {
   Query: {
     metadataList: async (_: any, { folderId }: { folderId: string }, context: any) => {
-      return GoServiceClient.getMetadataList(folderId, context.user);
+      const res = await GoServiceClient.getMetadataList(folderId, context.user);
+      return res || [];
     },
     metadataDetail: async (_: any, { id }: { id: string }, context: any) => {
       return GoServiceClient.getMetadataById(id, context.user);

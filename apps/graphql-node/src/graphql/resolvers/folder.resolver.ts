@@ -3,7 +3,8 @@ import { GoServiceClient } from '../../clients/go-service.client';
 export const folderResolvers = {
   Query: {
     folderTree: async (_: any, __: any, context: any) => {
-      return GoServiceClient.getFolderTree(context.user);
+      const res = await GoServiceClient.getFolderTree(context.user);
+      return res || [];
     },
     folder: async (_: any, { id }: { id: string }, context: any) => {
       return GoServiceClient.getFolderById(id, context.user);

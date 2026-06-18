@@ -104,7 +104,7 @@ func (r *postgresRepository) List(ctx context.Context) ([]*domain.Folder, error)
 	}
 	defer rows.Close()
 
-	var folders []*domain.Folder
+	folders := make([]*domain.Folder, 0)
 	for rows.Next() {
 		f := &domain.Folder{}
 		err := rows.Scan(&f.ID, &f.ParentID, &f.Name, &f.Description, &f.CreatedBy, &f.UpdatedBy, &f.CreatedAt, &f.UpdatedAt, &f.DeletedAt)

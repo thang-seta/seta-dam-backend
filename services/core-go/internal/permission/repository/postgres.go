@@ -183,7 +183,7 @@ func (r *postgresRepository) ListPermissions(ctx context.Context) ([]*domain.Obj
 	}
 	defer rows.Close()
 
-	var perms []*domain.ObjectPermission
+	perms := make([]*domain.ObjectPermission, 0)
 	for rows.Next() {
 		p := &domain.ObjectPermission{}
 		err := rows.Scan(&p.ID, &p.UserID, &p.ObjectType, &p.ObjectID, &p.Action, &p.CreatedAt)
