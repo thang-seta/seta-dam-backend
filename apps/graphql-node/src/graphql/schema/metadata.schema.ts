@@ -21,6 +21,7 @@ export const metadataTypeDefs = `#graphql
   }
 
   extend type Query {
+    metadataItems: [Metadata!]!
     metadataList(folderId: ID!): [Metadata!]!
     metadataDetail(id: ID!): Metadata
   }

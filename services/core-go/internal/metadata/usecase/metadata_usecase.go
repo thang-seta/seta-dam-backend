@@ -15,6 +15,7 @@ type MetadataUsecase interface {
 	GetByID(ctx context.Context, user *permDomain.UserContext, id string) (*domain.Metadata, error)
 	Update(ctx context.Context, user *permDomain.UserContext, meta *domain.Metadata) error
 	Delete(ctx context.Context, user *permDomain.UserContext, id string) error
+	List(ctx context.Context, user *permDomain.UserContext) ([]*domain.Metadata, error)
 	ListByFolder(ctx context.Context, user *permDomain.UserContext, folderID string) ([]*domain.Metadata, error)
 }
 
@@ -128,6 +129,30 @@ func (u *metadataUsecase) Delete(ctx context.Context, user *permDomain.UserConte
 	}
 
 	return u.repo.Delete(ctx, id)
+}
+
+func (u *metadataUsecase) List(ctx context.Context, user *permDomain.UserContext) ([]*domain.Metadata, error) {
+	if user == nil {
+		return nil, permDomain.ErrUnauthorized
+	}
+
+	allMetadata, err := u.repo.List(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if user.Role == "trainer_admin" {
+		return allMetadata, nil
+	}
+
+	visibleMetadata := make([]*domain.Metadata, 0, len(allMetadata))
+	for _, meta := range allMetadata {
+		allowed, err := u.permEngine.CheckMetadataPermission(ctx, user.UserID, meta.ID, permDomain.ActionRead)
+		if err == nil && allowed {
+			visibleMetadata = append(visibleMetadata, meta)
+		}
+	}
+	return visibleMetadata, nil
 }
 
 func (u *metadataUsecase) ListByFolder(ctx context.Context, user *permDomain.UserContext, folderID string) ([]*domain.Metadata, error) {

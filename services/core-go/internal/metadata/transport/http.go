@@ -3,13 +3,13 @@ package transport
 import (
 	"encoding/json"
 	"errors"
-	"net/http"
 	"github.com/go-chi/chi/v5"
 	"github.com/user/seta-dam-backend/services/core-go/internal/common"
 	folderDomain "github.com/user/seta-dam-backend/services/core-go/internal/folder/domain"
 	"github.com/user/seta-dam-backend/services/core-go/internal/metadata/domain"
 	"github.com/user/seta-dam-backend/services/core-go/internal/metadata/usecase"
 	permDomain "github.com/user/seta-dam-backend/services/core-go/internal/permission/domain"
+	"net/http"
 )
 
 type MetadataHandler struct {
@@ -22,6 +22,7 @@ func NewMetadataHandler(u usecase.MetadataUsecase) *MetadataHandler {
 
 func (h *MetadataHandler) RegisterRoutes(r chi.Router) {
 	r.Post("/metadata", h.CreateMetadata)
+	r.Get("/metadata", h.ListMetadata)
 	r.Get("/metadata/{id}", h.GetMetadataByID)
 	r.Put("/metadata/{id}", h.UpdateMetadata)
 	r.Delete("/metadata/{id}", h.DeleteMetadata)
@@ -30,7 +31,7 @@ func (h *MetadataHandler) RegisterRoutes(r chi.Router) {
 
 func (h *MetadataHandler) CreateMetadata(w http.ResponseWriter, r *http.Request) {
 	uCtx := common.GetUserContext(r.Context())
-	
+
 	var req domain.Metadata
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.respondWithError(w, http.StatusBadRequest, err.Error())
@@ -89,6 +90,18 @@ func (h *MetadataHandler) DeleteMetadata(w http.ResponseWriter, r *http.Request)
 	}
 
 	h.respondWithJSON(w, http.StatusOK, map[string]string{"message": "metadata deleted successfully"})
+}
+
+func (h *MetadataHandler) ListMetadata(w http.ResponseWriter, r *http.Request) {
+	uCtx := common.GetUserContext(r.Context())
+
+	list, err := h.usecase.List(r.Context(), uCtx)
+	if err != nil {
+		h.respondWithErrorForCode(w, err)
+		return
+	}
+
+	h.respondWithJSON(w, http.StatusOK, list)
 }
 
 func (h *MetadataHandler) ListByFolder(w http.ResponseWriter, r *http.Request) {

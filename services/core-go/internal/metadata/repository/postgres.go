@@ -13,6 +13,7 @@ type MetadataRepository interface {
 	GetByID(ctx context.Context, id string) (*domain.Metadata, error)
 	Update(ctx context.Context, meta *domain.Metadata) error
 	Delete(ctx context.Context, id string) error
+	List(ctx context.Context) ([]*domain.Metadata, error)
 	ListByFolder(ctx context.Context, folderID string) ([]*domain.Metadata, error)
 }
 
@@ -47,9 +48,9 @@ func (r *postgresRepository) Create(ctx context.Context, meta *domain.Metadata) 
 
 func (r *postgresRepository) GetByID(ctx context.Context, id string) (*domain.Metadata, error) {
 	query := `
-		SELECT id, folder_id, title, description, labels, category, 
-		       external_source, external_id, source_url, thumbnail_url, 
-		       license, author, metadata_json, notes, created_by, updated_by, created_at, updated_at, deleted_at
+		SELECT id, folder_id, title, COALESCE(description, ''), COALESCE(labels, ARRAY[]::text[]), COALESCE(category, ''), 
+		       COALESCE(external_source, ''), COALESCE(external_id, ''), COALESCE(source_url, ''), COALESCE(thumbnail_url, ''), 
+		       COALESCE(license, ''), COALESCE(author, ''), COALESCE(metadata_json, '{}'::jsonb), COALESCE(notes, ''), created_by, updated_by, created_at, updated_at, deleted_at
 		FROM metadata_items
 		WHERE id = $1 AND deleted_at IS NULL
 	`
@@ -120,16 +121,32 @@ func (r *postgresRepository) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
+func (r *postgresRepository) List(ctx context.Context) ([]*domain.Metadata, error) {
+	query := `
+		SELECT id, folder_id, title, COALESCE(description, ''), COALESCE(labels, ARRAY[]::text[]), COALESCE(category, ''), 
+		       COALESCE(external_source, ''), COALESCE(external_id, ''), COALESCE(source_url, ''), COALESCE(thumbnail_url, ''), 
+		       COALESCE(license, ''), COALESCE(author, ''), COALESCE(metadata_json, '{}'::jsonb), COALESCE(notes, ''), created_by, updated_by, created_at, updated_at, deleted_at
+		FROM metadata_items
+		WHERE deleted_at IS NULL
+		ORDER BY created_at DESC, title ASC
+	`
+	return r.list(ctx, query)
+}
+
 func (r *postgresRepository) ListByFolder(ctx context.Context, folderID string) ([]*domain.Metadata, error) {
 	query := `
-		SELECT id, folder_id, title, description, labels, category, 
-		       external_source, external_id, source_url, thumbnail_url, 
-		       license, author, metadata_json, notes, created_by, updated_by, created_at, updated_at, deleted_at
+		SELECT id, folder_id, title, COALESCE(description, ''), COALESCE(labels, ARRAY[]::text[]), COALESCE(category, ''), 
+		       COALESCE(external_source, ''), COALESCE(external_id, ''), COALESCE(source_url, ''), COALESCE(thumbnail_url, ''), 
+		       COALESCE(license, ''), COALESCE(author, ''), COALESCE(metadata_json, '{}'::jsonb), COALESCE(notes, ''), created_by, updated_by, created_at, updated_at, deleted_at
 		FROM metadata_items
 		WHERE folder_id = $1 AND deleted_at IS NULL
 		ORDER BY title ASC
 	`
-	rows, err := r.db.QueryContext(ctx, query, folderID)
+	return r.list(ctx, query, folderID)
+}
+
+func (r *postgresRepository) list(ctx context.Context, query string, args ...interface{}) ([]*domain.Metadata, error) {
+	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}

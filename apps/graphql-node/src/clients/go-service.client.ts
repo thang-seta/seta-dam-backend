@@ -90,6 +90,14 @@ export class GoServiceClient {
   }
 
   // Metadata Operations
+  static async getAllMetadata(context: UserContext | null) {
+    const res = await fetch(`${GO_SERVICE_URL}/api/metadata`, {
+      method: 'GET',
+      headers: this.getHeaders(context),
+    });
+    return this.handleResponse<any[]>(res);
+  }
+
   static async getMetadataList(folderId: string, context: UserContext | null) {
     const res = await fetch(`${GO_SERVICE_URL}/api/folders/${folderId}/metadata`, {
       method: 'GET',
