@@ -19,9 +19,14 @@ services:
   flyway:
     image: flyway/flyway:10-alpine
     container_name: seta-dam-flyway
+    environment:
+      FLYWAY_URL: jdbc:postgresql://db:5432/setadam
+      FLYWAY_USER: postgres
+      FLYWAY_PASSWORD: postgres
+      FLYWAY_CONNECT_RETRIES: 60
     volumes:
       - ./db/migrations:/flyway/sql
-    command: -url=jdbc:postgresql://db:5432/setadam -user=postgres -password=postgres -connectRetries=60 migrate
+    command: migrate
     depends_on:
       db:
         condition: service_healthy
