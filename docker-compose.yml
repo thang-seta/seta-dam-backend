@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   db:
     image: postgres:15-alpine
@@ -9,7 +7,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: setadam
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -23,7 +21,6 @@ services:
     container_name: seta-dam-flyway
     volumes:
       - ./db/migrations:/flyway/sql
-      - ./db/seeds:/flyway/seeds
     command: -url=jdbc:postgresql://db:5432/setadam -user=postgres -password=postgres -connectRetries=60 migrate
     depends_on:
       db:
@@ -35,8 +32,8 @@ services:
       dockerfile: Dockerfile
     container_name: seta-dam-core-go
     environment:
-      - PORT=8080
-      - DATABASE_URL=postgres://postgres:postgres@db:5432/setadam?sslmode=disable
+      PORT: 8080
+      DATABASE_URL: postgres://postgres:postgres@db:5432/setadam?sslmode=disable
     ports:
       - "8080:8080"
     depends_on:
@@ -51,8 +48,8 @@ services:
       dockerfile: Dockerfile
     container_name: seta-dam-graphql-node
     environment:
-      - PORT=4000
-      - GO_SERVICE_URL=http://core-go:8080
+      PORT: 4000
+      GO_SERVICE_URL: http://core-go:8080
     ports:
       - "4000:4000"
     depends_on:
@@ -61,6 +58,8 @@ services:
   prometheus:
     image: prom/prometheus:latest
     container_name: seta-dam-prometheus
+    profiles:
+      - monitoring
     volumes:
       - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
@@ -72,6 +71,8 @@ services:
   loki:
     image: grafana/loki:2.9.0
     container_name: seta-dam-loki
+    profiles:
+      - monitoring
     volumes:
       - ./infra/loki/loki-config.yml:/etc/loki/local-config.yaml
     ports:
@@ -80,8 +81,10 @@ services:
   grafana:
     image: grafana/grafana:latest
     container_name: seta-dam-grafana
+    profiles:
+      - monitoring
     ports:
-      - "3000:3000"
+      - "3001:3000"
     depends_on:
       - prometheus
       - loki

@@ -1,21 +1,37 @@
--- V3__folders_metadata.sql
--- Create folders and metadata tables
+-- V3__seed_demo_folders.sql
 
-CREATE TABLE IF NOT EXISTS folders (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(255) NOT NULL,
-    parent_id UUID REFERENCES folders(id) ON DELETE CASCADE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
+INSERT INTO folders (name, description, created_by)
+SELECT 'Open Images Sample', 'Sample imported image text metadata', u.id
+FROM users u
+WHERE u.email = 'thang.demo@gmail.com';
 
-CREATE TABLE IF NOT EXISTS metadata (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    folder_id UUID NOT NULL REFERENCES folders(id) ON DELETE CASCADE,
-    title VARCHAR(255) NOT NULL,
-    description TEXT,
-    labels TEXT[] DEFAULT '{}',
-    category VARCHAR(255),
-    source_url VARCHAR(2048),
-    notes TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
+INSERT INTO folders (name, description, created_by)
+SELECT 'Internal Review', 'Folders used for review workflow demo', u.id
+FROM users u
+WHERE u.email = 'thang.demo@gmail.com';
+
+INSERT INTO folders (name, description, parent_id, created_by)
+SELECT child.name, child.description, parent.id, u.id
+FROM folders parent
+JOIN users u ON u.email = 'thang.demo@gmail.com'
+CROSS JOIN (
+  VALUES
+    ('Animals', 'Animal-related image metadata'),
+    ('Vehicles', 'Vehicle-related image metadata'),
+    ('Food', 'Food-related image metadata'),
+    ('People', 'People and portrait-related metadata'),
+    ('Indoor Scenes', 'Indoor environment metadata'),
+    ('Outdoor Scenes', 'Outdoor environment metadata')
+) AS child(name, description)
+WHERE parent.name = 'Open Images Sample';
+
+INSERT INTO folders (name, description, parent_id, created_by)
+SELECT child.name, child.description, parent.id, u.id
+FROM folders parent
+JOIN users u ON u.email = 'thang.demo@gmail.com'
+CROSS JOIN (
+  VALUES
+    ('Need Review', 'Metadata items waiting for review'),
+    ('Approved Metadata', 'Metadata items already reviewed and approved')
+) AS child(name, description)
+WHERE parent.name = 'Internal Review';

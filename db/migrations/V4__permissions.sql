@@ -1,12 +1,32 @@
--- V4__permissions.sql
--- Create object-level permissions table
-
-CREATE TABLE IF NOT EXISTS object_permissions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    object_type VARCHAR(50) NOT NULL CHECK (object_type IN ('folder', 'metadata')),
-    object_id UUID NOT NULL,
-    action VARCHAR(50) NOT NULL CHECK (action IN ('read', 'write', 'manage_permissions')),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT unique_user_object_action UNIQUE (user_id, object_type, object_id, action)
-);
+INSERT INTO metadata_items (
+  folder_id,
+  title,
+  description,
+  labels,
+  category,
+  external_source,
+  external_id,
+  source_url,
+  thumbnail_url,
+  license,
+  author,
+  metadata_json,
+  created_by
+)
+SELECT
+  f.id,
+  'Dog standing on grass',
+  'Sample text metadata imported from Open Images V7',
+  ARRAY['Dog', 'Animal', 'Grass'],
+  'animal',
+  'open_images_v7',
+  '000002b66c9c498e',
+  'https://example.com/source-image',
+  'https://example.com/thumbnail-image',
+  'CC BY 2.0',
+  'Open Images contributor',
+  '{"source": "open_images_v7", "split": "validation"}'::jsonb,
+  u.id
+FROM folders f
+JOIN users u ON u.email = 'thang.demo@gmail.com'
+WHERE f.name = 'Animals';
