@@ -113,6 +113,9 @@ func (r *postgresRepository) List(ctx context.Context) ([]*domain.Folder, error)
 		}
 		folders = append(folders, f)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 	return folders, nil
 }
 

@@ -19,6 +19,7 @@ type Folder struct {
 
 var (
 	ErrFolderNotFound = errors.New("folder not found")
+	ErrNameRequired   = errors.New("name is a required field")
 	ErrCycleDetected  = errors.New("cannot move folder: cycle detected")
 	ErrNotEmpty       = errors.New("folder is not empty (contains subfolders or metadata)")
 )

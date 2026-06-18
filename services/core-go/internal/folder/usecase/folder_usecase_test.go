@@ -105,7 +105,7 @@ func TestMoveFolder(t *testing.T) {
 		}
 
 		parentID := "child-folder"
-		err := uc.MoveFolder(context.Background(), userCtx, "parent-folder", &parentID)
+		_, err := uc.MoveFolder(context.Background(), userCtx, "parent-folder", &parentID)
 		if !errors.Is(err, domain.ErrCycleDetected) {
 			t.Fatalf("expected ErrCycleDetected, got: %v", err)
 		}
@@ -120,9 +120,12 @@ func TestMoveFolder(t *testing.T) {
 		}
 
 		parentID := "other-folder"
-		err := uc.MoveFolder(context.Background(), userCtx, "folder-to-move", &parentID)
+		folder, err := uc.MoveFolder(context.Background(), userCtx, "folder-to-move", &parentID)
 		if err != nil {
 			t.Fatalf("expected nil error, got: %v", err)
+		}
+		if folder.ParentID == nil || *folder.ParentID != parentID {
+			t.Fatalf("expected returned folder parent_id to be updated, got: %v", folder.ParentID)
 		}
 	})
 }

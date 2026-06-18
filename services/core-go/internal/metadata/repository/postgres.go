@@ -167,5 +167,8 @@ func (r *postgresRepository) list(ctx context.Context, query string, args ...int
 		m.MetadataJSON = string(metaJSONBytes)
 		list = append(list, m)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 	return list, nil
 }

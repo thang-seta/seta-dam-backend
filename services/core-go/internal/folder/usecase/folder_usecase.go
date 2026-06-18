@@ -2,6 +2,8 @@ package usecase
 
 import (
 	"context"
+	"strings"
+
 	"github.com/google/uuid"
 	"github.com/user/seta-dam-backend/services/core-go/internal/folder/domain"
 	"github.com/user/seta-dam-backend/services/core-go/internal/folder/repository"
@@ -12,8 +14,8 @@ import (
 type FolderUsecase interface {
 	Create(ctx context.Context, user *permDomain.UserContext, name string, description *string, parentID *string) (*domain.Folder, error)
 	GetByID(ctx context.Context, user *permDomain.UserContext, id string) (*domain.Folder, error)
-	Update(ctx context.Context, user *permDomain.UserContext, id string, name string, description *string) error
-	MoveFolder(ctx context.Context, user *permDomain.UserContext, id string, parentID *string) error
+	Update(ctx context.Context, user *permDomain.UserContext, id string, name string, description *string) (*domain.Folder, error)
+	MoveFolder(ctx context.Context, user *permDomain.UserContext, id string, parentID *string) (*domain.Folder, error)
 	Delete(ctx context.Context, user *permDomain.UserContext, id string) error
 	ListTree(ctx context.Context, user *permDomain.UserContext) ([]*domain.Folder, error)
 }
@@ -33,6 +35,10 @@ func NewFolderUsecase(repo repository.FolderRepository, permEngine permUsecase.P
 func (u *folderUsecase) Create(ctx context.Context, user *permDomain.UserContext, name string, description *string, parentID *string) (*domain.Folder, error) {
 	if user == nil {
 		return nil, permDomain.ErrUnauthorized
+	}
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return nil, domain.ErrNameRequired
 	}
 
 	// 1. Authorize creation
@@ -85,39 +91,46 @@ func (u *folderUsecase) GetByID(ctx context.Context, user *permDomain.UserContex
 	return folder, nil
 }
 
-func (u *folderUsecase) Update(ctx context.Context, user *permDomain.UserContext, id string, name string, description *string) error {
+func (u *folderUsecase) Update(ctx context.Context, user *permDomain.UserContext, id string, name string, description *string) (*domain.Folder, error) {
 	folder, err := u.repo.GetByID(ctx, id)
 	if err != nil {
-		return err
+		return nil, err
+	}
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return nil, domain.ErrNameRequired
 	}
 
 	// Authorize write (FR-31)
 	err = u.permEngine.AuthorizeFolder(ctx, user, id, permDomain.ActionWrite)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	folder.Name = name
 	folder.Description = description
 	folder.UpdatedBy = &user.UserID
-	return u.repo.Update(ctx, folder)
+	if err := u.repo.Update(ctx, folder); err != nil {
+		return nil, err
+	}
+	return folder, nil
 }
 
-func (u *folderUsecase) MoveFolder(ctx context.Context, user *permDomain.UserContext, id string, parentID *string) error {
+func (u *folderUsecase) MoveFolder(ctx context.Context, user *permDomain.UserContext, id string, parentID *string) (*domain.Folder, error) {
 	folder, err := u.repo.GetByID(ctx, id)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Prevent moving folder into itself
 	if parentID != nil && *parentID == id {
-		return domain.ErrCycleDetected
+		return nil, domain.ErrCycleDetected
 	}
 
 	// Check write permission on current folder (FR-31)
 	err = u.permEngine.AuthorizeFolder(ctx, user, id, permDomain.ActionWrite)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Check write permission on destination folder (FR-31)
@@ -125,27 +138,30 @@ func (u *folderUsecase) MoveFolder(ctx context.Context, user *permDomain.UserCon
 		// Validate new parent exists
 		_, err = u.repo.GetByID(ctx, *parentID)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		err = u.permEngine.AuthorizeFolder(ctx, user, *parentID, permDomain.ActionWrite)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		// Prevent cycle (moving folder into one of its descendants)
 		isDescendant, err := u.repo.IsDescendantOf(ctx, *parentID, id)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		if isDescendant {
-			return domain.ErrCycleDetected
+			return nil, domain.ErrCycleDetected
 		}
 	}
 
 	folder.ParentID = parentID
 	folder.UpdatedBy = &user.UserID
-	return u.repo.Update(ctx, folder)
+	if err := u.repo.Update(ctx, folder); err != nil {
+		return nil, err
+	}
+	return folder, nil
 }
 
 func (u *folderUsecase) Delete(ctx context.Context, user *permDomain.UserContext, id string) error {

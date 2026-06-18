@@ -36,6 +36,8 @@ type UserContext struct {
 }
 
 var (
-	ErrUnauthorized = errors.New("unauthorized action")
-	ErrForbidden    = errors.New("forbidden resource access")
+	ErrUnauthorized      = errors.New("unauthorized action")
+	ErrForbidden         = errors.New("forbidden resource access")
+	ErrInvalidObjectType = errors.New("object_type must be folder, metadata, or metadata_item")
+	ErrInvalidAction     = errors.New("action must be read, write, or manage_permissions")
 )

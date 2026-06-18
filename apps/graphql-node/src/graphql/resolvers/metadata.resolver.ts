@@ -1,5 +1,26 @@
 import { GoServiceClient } from '../../clients/go-service.client';
 
+function requireNonBlank(value: string, fieldName: string): string {
+  const normalized = value.trim();
+  if (!normalized) {
+    throw new Error(`${fieldName} is required`);
+  }
+  return normalized;
+}
+
+function validateMetadataJson(value?: string): string {
+  const normalized = value?.trim() || '';
+  if (!normalized) {
+    return '';
+  }
+  try {
+    JSON.parse(normalized);
+    return normalized;
+  } catch {
+    throw new Error('metadataJson must be valid JSON');
+  }
+}
+
 export const metadataResolvers = {
   Query: {
     metadataItems: async (_: any, __: any, context: any) => {
@@ -35,8 +56,8 @@ export const metadataResolvers = {
       context: any
     ) => {
       const payload = {
-        folder_id: args.folderId,
-        title: args.title,
+        folder_id: requireNonBlank(args.folderId, 'folderId'),
+        title: requireNonBlank(args.title, 'title'),
         description: args.description || '',
         labels: args.labels || [],
         category: args.category || '',
@@ -46,7 +67,7 @@ export const metadataResolvers = {
         thumbnail_url: args.thumbnailUrl || '',
         license: args.license || '',
         author: args.author || '',
-        metadata_json: args.metadataJson || '',
+        metadata_json: validateMetadataJson(args.metadataJson),
         notes: args.notes || '',
       };
       return GoServiceClient.createMetadata(payload, context.user);
@@ -73,8 +94,8 @@ export const metadataResolvers = {
     ) => {
       const payload = {
         id: args.id,
-        folder_id: args.folderId,
-        title: args.title,
+        folder_id: requireNonBlank(args.folderId, 'folderId'),
+        title: requireNonBlank(args.title, 'title'),
         description: args.description || '',
         labels: args.labels || [],
         category: args.category || '',
@@ -84,11 +105,10 @@ export const metadataResolvers = {
         thumbnail_url: args.thumbnailUrl || '',
         license: args.license || '',
         author: args.author || '',
-        metadata_json: args.metadataJson || '',
+        metadata_json: validateMetadataJson(args.metadataJson),
         notes: args.notes || '',
       };
-      await GoServiceClient.updateMetadata(args.id, payload, context.user);
-      return GoServiceClient.getMetadataById(args.id, context.user);
+      return GoServiceClient.updateMetadata(args.id, payload, context.user);
     },
     deleteMetadata: async (_: any, { id }: { id: string }, context: any) => {
       await GoServiceClient.deleteMetadata(id, context.user);

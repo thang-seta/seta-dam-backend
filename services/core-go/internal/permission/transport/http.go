@@ -3,11 +3,11 @@ package transport
 import (
 	"encoding/json"
 	"errors"
-	"net/http"
 	"github.com/go-chi/chi/v5"
 	"github.com/user/seta-dam-backend/services/core-go/internal/common"
 	"github.com/user/seta-dam-backend/services/core-go/internal/permission/domain"
 	"github.com/user/seta-dam-backend/services/core-go/internal/permission/usecase"
+	"net/http"
 )
 
 type PermissionHandler struct {
@@ -128,6 +128,8 @@ func (h *PermissionHandler) respondWithErrorForCode(w http.ResponseWriter, err e
 		h.respondWithError(w, http.StatusForbidden, err.Error())
 	} else if errors.Is(err, domain.ErrUnauthorized) {
 		h.respondWithError(w, http.StatusUnauthorized, err.Error())
+	} else if errors.Is(err, domain.ErrInvalidObjectType) || errors.Is(err, domain.ErrInvalidAction) {
+		h.respondWithError(w, http.StatusBadRequest, err.Error())
 	} else {
 		h.respondWithError(w, http.StatusInternalServerError, err.Error())
 	}

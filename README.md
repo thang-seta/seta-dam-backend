@@ -34,6 +34,7 @@ For more detailed information, please read the documents inside the `/docs` dire
 - [docs/api-scope.md](docs/api-scope.md)
 - [docs/database-design.md](docs/database-design.md)
 - [docs/permission-design.md](docs/permission-design.md)
+- [docs/phase1-completion.md](docs/phase1-completion.md)
 
 ---
 
@@ -95,6 +96,10 @@ For convenience, you can manage the lifecycle of the application using NPM scrip
   ```bash
   npm run db:import -- --limit 100
   ```
+* **Run Phase 1 Smoke Test** (after services are running):
+  ```bash
+  npm run smoke:test
+  ```
 * **Local Hybrid Development Mode** (Starts DB in Docker, runs Go & Node.js Gateway locally with hot-reload):
   ```bash
   npm run dev:all
@@ -124,6 +129,8 @@ If you prefer to run the scripts directly, we provide scripts for Linux/macOS (`
 | **Import Dry-run** | `./scripts/import-open-images-v7.py --limit 10 --dry-run` | `.\scripts\import-open-images-v7.bat --limit 10 --dry-run` |
 
 The importer creates an `Open Images V7 Import` root folder, creates label-based child folders, and upserts rows into `metadata_items` using `external_source = 'open_images_v7_validation'`.
+
+For the end-to-end acceptance flow, see [docs/smoke-test.md](docs/smoke-test.md).
 
 ---
 

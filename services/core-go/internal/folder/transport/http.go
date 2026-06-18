@@ -3,12 +3,12 @@ package transport
 import (
 	"encoding/json"
 	"errors"
-	"net/http"
 	"github.com/go-chi/chi/v5"
 	"github.com/user/seta-dam-backend/services/core-go/internal/common"
 	"github.com/user/seta-dam-backend/services/core-go/internal/folder/domain"
 	"github.com/user/seta-dam-backend/services/core-go/internal/folder/usecase"
 	permDomain "github.com/user/seta-dam-backend/services/core-go/internal/permission/domain"
+	"net/http"
 )
 
 type FolderHandler struct {
@@ -30,7 +30,7 @@ func (h *FolderHandler) RegisterRoutes(r chi.Router) {
 
 func (h *FolderHandler) CreateFolder(w http.ResponseWriter, r *http.Request) {
 	uCtx := common.GetUserContext(r.Context())
-	
+
 	var req struct {
 		Name        string  `json:"name"`
 		Description *string `json:"description"`
@@ -42,7 +42,7 @@ func (h *FolderHandler) CreateFolder(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if req.Name == "" {
-		h.respondWithError(w, http.StatusBadRequest, "name is required")
+		h.respondWithError(w, http.StatusBadRequest, domain.ErrNameRequired.Error())
 		return
 	}
 
@@ -95,13 +95,13 @@ func (h *FolderHandler) UpdateFolder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.usecase.Update(r.Context(), uCtx, id, req.Name, req.Description)
+	folder, err := h.usecase.Update(r.Context(), uCtx, id, req.Name, req.Description)
 	if err != nil {
 		h.respondWithErrorForCode(w, err)
 		return
 	}
 
-	h.respondWithJSON(w, http.StatusOK, map[string]string{"message": "folder updated successfully"})
+	h.respondWithJSON(w, http.StatusOK, folder)
 }
 
 func (h *FolderHandler) MoveFolder(w http.ResponseWriter, r *http.Request) {
@@ -116,13 +116,13 @@ func (h *FolderHandler) MoveFolder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.usecase.MoveFolder(r.Context(), uCtx, id, req.ParentID)
+	folder, err := h.usecase.MoveFolder(r.Context(), uCtx, id, req.ParentID)
 	if err != nil {
 		h.respondWithErrorForCode(w, err)
 		return
 	}
 
-	h.respondWithJSON(w, http.StatusOK, map[string]string{"message": "folder moved successfully"})
+	h.respondWithJSON(w, http.StatusOK, folder)
 }
 
 func (h *FolderHandler) DeleteFolder(w http.ResponseWriter, r *http.Request) {
@@ -151,7 +151,7 @@ func (h *FolderHandler) respondWithError(w http.ResponseWriter, code int, messag
 func (h *FolderHandler) respondWithErrorForCode(w http.ResponseWriter, err error) {
 	if errors.Is(err, domain.ErrFolderNotFound) {
 		h.respondWithError(w, http.StatusNotFound, err.Error())
-	} else if errors.Is(err, domain.ErrCycleDetected) || errors.Is(err, domain.ErrNotEmpty) {
+	} else if errors.Is(err, domain.ErrNameRequired) || errors.Is(err, domain.ErrCycleDetected) || errors.Is(err, domain.ErrNotEmpty) {
 		h.respondWithError(w, http.StatusBadRequest, err.Error())
 	} else if errors.Is(err, permDomain.ErrForbidden) {
 		h.respondWithError(w, http.StatusForbidden, err.Error())

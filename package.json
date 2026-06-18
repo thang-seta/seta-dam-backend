@@ -10,6 +10,7 @@
     "db:migrate": "docker compose run --rm flyway migrate",
     "db:seed": "docker compose exec -T db psql -U postgres -d setadam < db/seeds/demo_data.sql",
     "db:import": "python scripts/import-open-images-v7.py",
+    "smoke:test": "python3 scripts/smoke-test.py",
     "dev:go": "cd services/core-go && go run cmd/server/main.go",
     "dev:node": "npm --prefix apps/graphql-node run dev",
     "dev:all": "docker compose up -d db flyway && concurrently -k -n GO,NODE -c blue,green \"npm run dev:go\" \"npm run dev:node\"",

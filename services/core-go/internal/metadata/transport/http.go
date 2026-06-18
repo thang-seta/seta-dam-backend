@@ -70,13 +70,13 @@ func (h *MetadataHandler) UpdateMetadata(w http.ResponseWriter, r *http.Request)
 	}
 	req.ID = id
 
-	err := h.usecase.Update(r.Context(), uCtx, &req)
+	meta, err := h.usecase.Update(r.Context(), uCtx, &req)
 	if err != nil {
 		h.respondWithErrorForCode(w, err)
 		return
 	}
 
-	h.respondWithJSON(w, http.StatusOK, map[string]string{"message": "metadata updated successfully"})
+	h.respondWithJSON(w, http.StatusOK, meta)
 }
 
 func (h *MetadataHandler) DeleteMetadata(w http.ResponseWriter, r *http.Request) {
@@ -130,7 +130,7 @@ func (h *MetadataHandler) respondWithError(w http.ResponseWriter, code int, mess
 func (h *MetadataHandler) respondWithErrorForCode(w http.ResponseWriter, err error) {
 	if errors.Is(err, domain.ErrMetadataNotFound) || errors.Is(err, folderDomain.ErrFolderNotFound) {
 		h.respondWithError(w, http.StatusNotFound, err.Error())
-	} else if errors.Is(err, domain.ErrTitleRequired) || errors.Is(err, domain.ErrFolderRequired) {
+	} else if errors.Is(err, domain.ErrTitleRequired) || errors.Is(err, domain.ErrFolderRequired) || errors.Is(err, domain.ErrInvalidMetadataJSON) {
 		h.respondWithError(w, http.StatusBadRequest, err.Error())
 	} else if errors.Is(err, permDomain.ErrForbidden) {
 		h.respondWithError(w, http.StatusForbidden, err.Error())

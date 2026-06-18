@@ -192,6 +192,9 @@ func (r *postgresRepository) ListPermissions(ctx context.Context) ([]*domain.Obj
 		}
 		perms = append(perms, p)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 	return perms, nil
 }
 

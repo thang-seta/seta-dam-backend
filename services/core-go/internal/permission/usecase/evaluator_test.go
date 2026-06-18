@@ -88,3 +88,54 @@ func TestAuthorizeFolder(t *testing.T) {
 		}
 	})
 }
+
+func TestPermissionInputValidation(t *testing.T) {
+	repo := &mockPermRepo{}
+	evaluator := NewPermissionEvaluator(repo)
+	userCtx := &domain.UserContext{
+		UserID: "admin-user",
+		Role:   "trainer_admin",
+	}
+
+	t.Run("rejects invalid object type when granting", func(t *testing.T) {
+		err := evaluator.AddPermission(context.Background(), userCtx, &domain.ObjectPermission{
+			UserID:     "viewer-user",
+			ObjectType: "dataset",
+			ObjectID:   "object-1",
+			Action:     string(domain.ActionRead),
+		})
+		if !errors.Is(err, domain.ErrInvalidObjectType) {
+			t.Fatalf("expected ErrInvalidObjectType, got: %v", err)
+		}
+	})
+
+	t.Run("rejects invalid action when granting", func(t *testing.T) {
+		err := evaluator.AddPermission(context.Background(), userCtx, &domain.ObjectPermission{
+			UserID:     "viewer-user",
+			ObjectType: "folder",
+			ObjectID:   "object-1",
+			Action:     "publish",
+		})
+		if !errors.Is(err, domain.ErrInvalidAction) {
+			t.Fatalf("expected ErrInvalidAction, got: %v", err)
+		}
+	})
+
+	t.Run("normalizes metadata_item object type", func(t *testing.T) {
+		repo.addPerm = func(ctx context.Context, perm *domain.ObjectPermission, grantedByID string) error {
+			if perm.ObjectType != "metadata" {
+				t.Fatalf("expected normalized object type metadata, got %q", perm.ObjectType)
+			}
+			return nil
+		}
+		err := evaluator.AddPermission(context.Background(), userCtx, &domain.ObjectPermission{
+			UserID:     "viewer-user",
+			ObjectType: "metadata_item",
+			ObjectID:   "meta-1",
+			Action:     string(domain.ActionRead),
+		})
+		if err != nil {
+			t.Fatalf("expected nil error, got: %v", err)
+		}
+	})
+}

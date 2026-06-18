@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+
 	"github.com/user/seta-dam-backend/services/core-go/internal/permission/domain"
 	"github.com/user/seta-dam-backend/services/core-go/internal/permission/repository"
 )
@@ -70,9 +71,17 @@ func (pe *permissionEvaluator) AddPermission(ctx context.Context, user *domain.U
 	if user == nil {
 		return domain.ErrUnauthorized
 	}
+	objectType, err := normalizeObjectType(perm.ObjectType)
+	if err != nil {
+		return err
+	}
+	if err := validateAction(perm.Action); err != nil {
+		return err
+	}
+	perm.ObjectType = objectType
+
 	// Only trainer_admin or users with manage_permissions on the target folder/metadata can grant permissions
 	if user.Role != "trainer_admin" {
-		var err error
 		if perm.ObjectType == "folder" {
 			err = pe.AuthorizeFolder(ctx, user, perm.ObjectID, domain.ActionManagePermissions)
 		} else {
@@ -89,9 +98,16 @@ func (pe *permissionEvaluator) DeletePermission(ctx context.Context, user *domai
 	if user == nil {
 		return domain.ErrUnauthorized
 	}
+	objectType, err := normalizeObjectType(objectType)
+	if err != nil {
+		return err
+	}
+	if err := validateAction(action); err != nil {
+		return err
+	}
+
 	// Only trainer_admin or users with manage_permissions can revoke permissions
 	if user.Role != "trainer_admin" {
-		var err error
 		if objectType == "folder" {
 			err = pe.AuthorizeFolder(ctx, user, objectID, domain.ActionManagePermissions)
 		} else {
@@ -107,5 +123,29 @@ func (pe *permissionEvaluator) DeletePermission(ctx context.Context, user *domai
 func (pe *permissionEvaluator) GetEffectivePermissions(ctx context.Context, user *domain.UserContext, targetUserID string, objectType string, objectID string) ([]string, error) {
 	// For demo/debugging purposes, we allow anyone to query effective permissions.
 	// We delegate the evaluation to the repository layer, which checks both explicit permission rules and trainer_admin status.
+	objectType, err := normalizeObjectType(objectType)
+	if err != nil {
+		return nil, err
+	}
 	return pe.repo.GetEffectivePermissions(ctx, targetUserID, objectType, objectID)
+}
+
+func normalizeObjectType(objectType string) (string, error) {
+	switch objectType {
+	case "folder":
+		return "folder", nil
+	case "metadata", "metadata_item":
+		return "metadata", nil
+	default:
+		return "", domain.ErrInvalidObjectType
+	}
+}
+
+func validateAction(action string) error {
+	switch domain.Action(action) {
+	case domain.ActionRead, domain.ActionWrite, domain.ActionManagePermissions:
+		return nil
+	default:
+		return domain.ErrInvalidAction
+	}
 }

@@ -28,7 +28,8 @@ type Metadata struct {
 }
 
 var (
-	ErrMetadataNotFound = errors.New("metadata item not found")
-	ErrTitleRequired    = errors.New("title is a required field")
-	ErrFolderRequired   = errors.New("folder_id is a required field")
+	ErrMetadataNotFound    = errors.New("metadata item not found")
+	ErrTitleRequired       = errors.New("title is a required field")
+	ErrFolderRequired      = errors.New("folder_id is a required field")
+	ErrInvalidMetadataJSON = errors.New("metadata_json must be valid JSON")
 )
