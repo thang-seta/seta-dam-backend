@@ -50,6 +50,7 @@ services:
     environment:
       PORT: 4000
       GO_SERVICE_URL: http://core-go:8080
+      NODE_ENV: development
     ports:
       - "4000:4000"
     depends_on:
