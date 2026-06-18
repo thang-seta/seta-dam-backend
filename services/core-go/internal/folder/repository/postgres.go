@@ -27,21 +27,21 @@ func NewPostgresRepository(db *sql.DB) FolderRepository {
 
 func (r *postgresRepository) Create(ctx context.Context, folder *domain.Folder) error {
 	query := `
-		INSERT INTO folders (id, name, parent_id)
-		VALUES ($1, $2, $3)
-		RETURNING created_at
+		INSERT INTO folders (id, name, parent_id, description, created_by, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+		RETURNING created_at, updated_at
 	`
-	return r.db.QueryRowContext(ctx, query, folder.ID, folder.Name, folder.ParentID).Scan(&folder.CreatedAt)
+	return r.db.QueryRowContext(ctx, query, folder.ID, folder.Name, folder.ParentID, folder.Description, folder.CreatedBy).Scan(&folder.CreatedAt, &folder.UpdatedAt)
 }
 
 func (r *postgresRepository) GetByID(ctx context.Context, id string) (*domain.Folder, error) {
 	query := `
-		SELECT id, name, parent_id, created_at
+		SELECT id, parent_id, name, description, created_by, updated_by, created_at, updated_at, deleted_at
 		FROM folders
-		WHERE id = $1
+		WHERE id = $1 AND deleted_at IS NULL
 	`
 	f := &domain.Folder{}
-	err := r.db.QueryRowContext(ctx, query, id).Scan(&f.ID, &f.Name, &f.ParentID, &f.CreatedAt)
+	err := r.db.QueryRowContext(ctx, query, id).Scan(&f.ID, &f.ParentID, &f.Name, &f.Description, &f.CreatedBy, &f.UpdatedBy, &f.CreatedAt, &f.UpdatedAt, &f.DeletedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, domain.ErrFolderNotFound
@@ -54,10 +54,10 @@ func (r *postgresRepository) GetByID(ctx context.Context, id string) (*domain.Fo
 func (r *postgresRepository) Update(ctx context.Context, folder *domain.Folder) error {
 	query := `
 		UPDATE folders
-		SET name = $2, parent_id = $3
-		WHERE id = $1
+		SET name = $2, parent_id = $3, description = $4, updated_by = $5, updated_at = NOW()
+		WHERE id = $1 AND deleted_at IS NULL
 	`
-	res, err := r.db.ExecContext(ctx, query, folder.ID, folder.Name, folder.ParentID)
+	res, err := r.db.ExecContext(ctx, query, folder.ID, folder.Name, folder.ParentID, folder.Description, folder.UpdatedBy)
 	if err != nil {
 		return err
 	}
@@ -73,8 +73,9 @@ func (r *postgresRepository) Update(ctx context.Context, folder *domain.Folder) 
 
 func (r *postgresRepository) Delete(ctx context.Context, id string) error {
 	query := `
-		DELETE FROM folders
-		WHERE id = $1
+		UPDATE folders
+		SET deleted_at = NOW()
+		WHERE id = $1 AND deleted_at IS NULL
 	`
 	res, err := r.db.ExecContext(ctx, query, id)
 	if err != nil {
@@ -92,8 +93,9 @@ func (r *postgresRepository) Delete(ctx context.Context, id string) error {
 
 func (r *postgresRepository) List(ctx context.Context) ([]*domain.Folder, error) {
 	query := `
-		SELECT id, name, parent_id, created_at
+		SELECT id, parent_id, name, description, created_by, updated_by, created_at, updated_at, deleted_at
 		FROM folders
+		WHERE deleted_at IS NULL
 		ORDER BY name ASC
 	`
 	rows, err := r.db.QueryContext(ctx, query)
@@ -105,7 +107,7 @@ func (r *postgresRepository) List(ctx context.Context) ([]*domain.Folder, error)
 	var folders []*domain.Folder
 	for rows.Next() {
 		f := &domain.Folder{}
-		err := rows.Scan(&f.ID, &f.Name, &f.ParentID, &f.CreatedAt)
+		err := rows.Scan(&f.ID, &f.ParentID, &f.Name, &f.Description, &f.CreatedBy, &f.UpdatedBy, &f.CreatedAt, &f.UpdatedAt, &f.DeletedAt)
 		if err != nil {
 			return nil, err
 		}
@@ -119,11 +121,12 @@ func (r *postgresRepository) IsDescendantOf(ctx context.Context, potentialDescen
 		WITH RECURSIVE folder_tree AS (
 			SELECT id, parent_id
 			FROM folders
-			WHERE id = $1
+			WHERE id = $1 AND deleted_at IS NULL
 			UNION ALL
 			SELECT f.id, f.parent_id
 			FROM folders f
 			JOIN folder_tree ft ON f.id = ft.parent_id
+			WHERE f.deleted_at IS NULL
 		)
 		SELECT EXISTS (
 			SELECT 1 FROM folder_tree WHERE id = $2
@@ -137,9 +140,9 @@ func (r *postgresRepository) IsDescendantOf(ctx context.Context, potentialDescen
 func (r *postgresRepository) IsEmpty(ctx context.Context, id string) (bool, error) {
 	query := `
 		SELECT EXISTS (
-			SELECT 1 FROM folders WHERE parent_id = $1
+			SELECT 1 FROM folders WHERE parent_id = $1 AND deleted_at IS NULL
 			UNION ALL
-			SELECT 1 FROM metadata WHERE folder_id = $1
+			SELECT 1 FROM metadata_items WHERE folder_id = $1 AND deleted_at IS NULL
 		)
 	`
 	var containsElements bool

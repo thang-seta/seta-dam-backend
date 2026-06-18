@@ -10,11 +10,19 @@ export const folderResolvers = {
     },
   },
   Mutation: {
-    createFolder: async (_: any, { name, parentId }: { name: string; parentId?: string | null }, context: any) => {
-      return GoServiceClient.createFolder(name, parentId || null, context.user);
+    createFolder: async (
+      _: any,
+      { name, description, parentId }: { name: string; description?: string | null; parentId?: string | null },
+      context: any
+    ) => {
+      return GoServiceClient.createFolder(name, description || null, parentId || null, context.user);
     },
-    updateFolder: async (_: any, { id, name }: { id: string; name: string }, context: any) => {
-      await GoServiceClient.updateFolder(id, name, context.user);
+    updateFolder: async (
+      _: any,
+      { id, name, description }: { id: string; name: string; description?: string | null },
+      context: any
+    ) => {
+      await GoServiceClient.updateFolder(id, name, description || null, context.user);
       return GoServiceClient.getFolderById(id, context.user);
     },
     moveFolder: async (_: any, { id, parentId }: { id: string; parentId?: string | null }, context: any) => {

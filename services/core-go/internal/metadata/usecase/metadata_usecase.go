@@ -56,6 +56,7 @@ func (u *metadataUsecase) Create(ctx context.Context, user *permDomain.UserConte
 	}
 
 	meta.ID = uuid.New().String()
+	meta.CreatedBy = user.UserID
 	err = u.repo.Create(ctx, meta)
 	if err != nil {
 		return nil, err
@@ -110,6 +111,7 @@ func (u *metadataUsecase) Update(ctx context.Context, user *permDomain.UserConte
 		}
 	}
 
+	meta.UpdatedBy = &user.UserID
 	return u.repo.Update(ctx, meta)
 }
 

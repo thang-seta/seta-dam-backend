@@ -23,7 +23,7 @@ func (h *FolderHandler) RegisterRoutes(r chi.Router) {
 	r.Post("/folders", h.CreateFolder)
 	r.Get("/folders/tree", h.GetTree)
 	r.Get("/folders/{id}", h.GetFolderByID)
-	r.Put("/folders/{id}", h.UpdateFolderName)
+	r.Put("/folders/{id}", h.UpdateFolder)
 	r.Put("/folders/{id}/move", h.MoveFolder)
 	r.Delete("/folders/{id}", h.DeleteFolder)
 }
@@ -32,8 +32,9 @@ func (h *FolderHandler) CreateFolder(w http.ResponseWriter, r *http.Request) {
 	uCtx := common.GetUserContext(r.Context())
 	
 	var req struct {
-		Name     string  `json:"name"`
-		ParentID *string `json:"parent_id"`
+		Name        string  `json:"name"`
+		Description *string `json:"description"`
+		ParentID    *string `json:"parent_id"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.respondWithError(w, http.StatusBadRequest, err.Error())
@@ -45,7 +46,7 @@ func (h *FolderHandler) CreateFolder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	folder, err := h.usecase.Create(r.Context(), uCtx, req.Name, req.ParentID)
+	folder, err := h.usecase.Create(r.Context(), uCtx, req.Name, req.Description, req.ParentID)
 	if err != nil {
 		h.respondWithErrorForCode(w, err)
 		return
@@ -76,12 +77,13 @@ func (h *FolderHandler) GetFolderByID(w http.ResponseWriter, r *http.Request) {
 	h.respondWithJSON(w, http.StatusOK, folder)
 }
 
-func (h *FolderHandler) UpdateFolderName(w http.ResponseWriter, r *http.Request) {
+func (h *FolderHandler) UpdateFolder(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	uCtx := common.GetUserContext(r.Context())
 
 	var req struct {
-		Name string `json:"name"`
+		Name        string  `json:"name"`
+		Description *string `json:"description"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.respondWithError(w, http.StatusBadRequest, err.Error())
@@ -93,13 +95,13 @@ func (h *FolderHandler) UpdateFolderName(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	err := h.usecase.UpdateName(r.Context(), uCtx, id, req.Name)
+	err := h.usecase.Update(r.Context(), uCtx, id, req.Name, req.Description)
 	if err != nil {
 		h.respondWithErrorForCode(w, err)
 		return
 	}
 
-	h.respondWithJSON(w, http.StatusOK, map[string]string{"message": "folder name updated successfully"})
+	h.respondWithJSON(w, http.StatusOK, map[string]string{"message": "folder updated successfully"})
 }
 
 func (h *FolderHandler) MoveFolder(w http.ResponseWriter, r *http.Request) {

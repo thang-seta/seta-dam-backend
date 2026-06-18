@@ -82,7 +82,7 @@ func (pe *permissionEvaluator) AddPermission(ctx context.Context, user *domain.U
 			return domain.ErrForbidden
 		}
 	}
-	return pe.repo.AddPermission(ctx, perm)
+	return pe.repo.AddPermission(ctx, perm, user.UserID)
 }
 
 func (pe *permissionEvaluator) DeletePermission(ctx context.Context, user *domain.UserContext, userID string, objectType string, objectID string, action string) error {

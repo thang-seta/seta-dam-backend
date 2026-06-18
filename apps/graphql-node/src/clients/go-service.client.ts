@@ -27,7 +27,7 @@ export class GoServiceClient {
     if (!response.ok) {
       let errMsg = 'HTTP error';
       try {
-        const errBody = await response.json();
+        const errBody = await response.json() as any;
         errMsg = errBody.error || errBody.message || errMsg;
       } catch {
         errMsg = await response.text() || errMsg;
@@ -54,20 +54,20 @@ export class GoServiceClient {
     return this.handleResponse<any>(res);
   }
 
-  static async createFolder(name: string, parentId: string | null, context: UserContext | null) {
+  static async createFolder(name: string, description: string | null, parentId: string | null, context: UserContext | null) {
     const res = await fetch(`${GO_SERVICE_URL}/api/folders`, {
       method: 'POST',
       headers: this.getHeaders(context),
-      body: JSON.stringify({ name, parent_id: parentId }),
+      body: JSON.stringify({ name, description, parent_id: parentId }),
     });
     return this.handleResponse<any>(res);
   }
 
-  static async updateFolder(id: string, name: string, context: UserContext | null) {
+  static async updateFolder(id: string, name: string, description: string | null, context: UserContext | null) {
     const res = await fetch(`${GO_SERVICE_URL}/api/folders/${id}`, {
       method: 'PUT',
       headers: this.getHeaders(context),
-      body: JSON.stringify({ name }),
+      body: JSON.stringify({ name, description }),
     });
     return this.handleResponse<any>(res);
   }

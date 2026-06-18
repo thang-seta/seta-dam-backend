@@ -11,7 +11,7 @@ import (
 type mockPermRepo struct {
 	checkFolder   func(ctx context.Context, userID string, folderID string, action domain.Action) (bool, error)
 	checkMetadata func(ctx context.Context, userID string, metadataID string, action domain.Action) (bool, error)
-	addPerm       func(ctx context.Context, perm *domain.ObjectPermission) error
+	addPerm       func(ctx context.Context, perm *domain.ObjectPermission, grantedByID string) error
 	deletePerm    func(ctx context.Context, userID string, objectType string, objectID string, action string) error
 	getEffective  func(ctx context.Context, userID string, objectType string, objectID string) ([]string, error)
 }
@@ -24,8 +24,8 @@ func (m *mockPermRepo) CheckMetadataPermission(ctx context.Context, userID strin
 	return m.checkMetadata(ctx, userID, metadataID, action)
 }
 
-func (m *mockPermRepo) AddPermission(ctx context.Context, perm *domain.ObjectPermission) error {
-	return m.addPerm(ctx, perm)
+func (m *mockPermRepo) AddPermission(ctx context.Context, perm *domain.ObjectPermission, grantedByID string) error {
+	return m.addPerm(ctx, perm, grantedByID)
 }
 
 func (m *mockPermRepo) DeletePermission(ctx context.Context, userID string, objectType string, objectID string, action string) error {

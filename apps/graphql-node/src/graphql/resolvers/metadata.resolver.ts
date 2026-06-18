@@ -18,7 +18,13 @@ export const metadataResolvers = {
         description?: string;
         labels?: string[];
         category?: string;
+        externalSource?: string;
+        externalId?: string;
         sourceUrl?: string;
+        thumbnailUrl?: string;
+        license?: string;
+        author?: string;
+        metadataJson?: string;
         notes?: string;
       },
       context: any
@@ -29,7 +35,13 @@ export const metadataResolvers = {
         description: args.description || '',
         labels: args.labels || [],
         category: args.category || '',
+        external_source: args.externalSource || '',
+        external_id: args.externalId || '',
         source_url: args.sourceUrl || '',
+        thumbnail_url: args.thumbnailUrl || '',
+        license: args.license || '',
+        author: args.author || '',
+        metadata_json: args.metadataJson || '',
         notes: args.notes || '',
       };
       return GoServiceClient.createMetadata(payload, context.user);
@@ -43,7 +55,13 @@ export const metadataResolvers = {
         description?: string;
         labels?: string[];
         category?: string;
+        externalSource?: string;
+        externalId?: string;
         sourceUrl?: string;
+        thumbnailUrl?: string;
+        license?: string;
+        author?: string;
+        metadataJson?: string;
         notes?: string;
       },
       context: any
@@ -55,7 +73,13 @@ export const metadataResolvers = {
         description: args.description || '',
         labels: args.labels || [],
         category: args.category || '',
+        external_source: args.externalSource || '',
+        external_id: args.externalId || '',
         source_url: args.sourceUrl || '',
+        thumbnail_url: args.thumbnailUrl || '',
+        license: args.license || '',
+        author: args.author || '',
+        metadata_json: args.metadataJson || '',
         notes: args.notes || '',
       };
       await GoServiceClient.updateMetadata(args.id, payload, context.user);

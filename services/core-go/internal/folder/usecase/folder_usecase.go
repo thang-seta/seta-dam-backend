@@ -10,9 +10,9 @@ import (
 )
 
 type FolderUsecase interface {
-	Create(ctx context.Context, user *permDomain.UserContext, name string, parentID *string) (*domain.Folder, error)
+	Create(ctx context.Context, user *permDomain.UserContext, name string, description *string, parentID *string) (*domain.Folder, error)
 	GetByID(ctx context.Context, user *permDomain.UserContext, id string) (*domain.Folder, error)
-	UpdateName(ctx context.Context, user *permDomain.UserContext, id string, name string) error
+	Update(ctx context.Context, user *permDomain.UserContext, id string, name string, description *string) error
 	MoveFolder(ctx context.Context, user *permDomain.UserContext, id string, parentID *string) error
 	Delete(ctx context.Context, user *permDomain.UserContext, id string) error
 	ListTree(ctx context.Context, user *permDomain.UserContext) ([]*domain.Folder, error)
@@ -30,7 +30,7 @@ func NewFolderUsecase(repo repository.FolderRepository, permEngine permUsecase.P
 	}
 }
 
-func (u *folderUsecase) Create(ctx context.Context, user *permDomain.UserContext, name string, parentID *string) (*domain.Folder, error) {
+func (u *folderUsecase) Create(ctx context.Context, user *permDomain.UserContext, name string, description *string, parentID *string) (*domain.Folder, error) {
 	if user == nil {
 		return nil, permDomain.ErrUnauthorized
 	}
@@ -55,9 +55,11 @@ func (u *folderUsecase) Create(ctx context.Context, user *permDomain.UserContext
 	}
 
 	folder := &domain.Folder{
-		ID:       uuid.New().String(),
-		Name:     name,
-		ParentID: parentID,
+		ID:          uuid.New().String(),
+		Name:        name,
+		Description: description,
+		ParentID:    parentID,
+		CreatedBy:   user.UserID,
 	}
 
 	err := u.repo.Create(ctx, folder)
@@ -83,7 +85,7 @@ func (u *folderUsecase) GetByID(ctx context.Context, user *permDomain.UserContex
 	return folder, nil
 }
 
-func (u *folderUsecase) UpdateName(ctx context.Context, user *permDomain.UserContext, id string, name string) error {
+func (u *folderUsecase) Update(ctx context.Context, user *permDomain.UserContext, id string, name string, description *string) error {
 	folder, err := u.repo.GetByID(ctx, id)
 	if err != nil {
 		return err
@@ -96,6 +98,8 @@ func (u *folderUsecase) UpdateName(ctx context.Context, user *permDomain.UserCon
 	}
 
 	folder.Name = name
+	folder.Description = description
+	folder.UpdatedBy = &user.UserID
 	return u.repo.Update(ctx, folder)
 }
 
@@ -140,6 +144,7 @@ func (u *folderUsecase) MoveFolder(ctx context.Context, user *permDomain.UserCon
 	}
 
 	folder.ParentID = parentID
+	folder.UpdatedBy = &user.UserID
 	return u.repo.Update(ctx, folder)
 }
 

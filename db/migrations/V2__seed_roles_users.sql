@@ -1,13 +1,13 @@
 -- V2__seed_roles_permissions_users.sql
 
-INSERT INTO users (email, display_name)
+INSERT INTO users (id, email, display_name)
 VALUES
-  ('thang.demo@gmail.com', 'Thang Bui'),
-  ('hung.demo@gmail.com', 'Hung Nguyen Anh'),
-  ('minh.demo@gmail.com', 'Minh Pham'),
-  ('linh.demo@gmail.com', 'Linh Tran'),
-  ('mai.demo@gmail.com', 'Mai Le'),
-  ('quan.demo@gmail.com', 'Quan Do');
+  ('00000000-0000-0000-0000-000000000001', 'thang.demo@gmail.com', 'Thang Bui'),
+  ('00000000-0000-0000-0000-000000000002', 'hung.demo@gmail.com', 'Hung Nguyen Anh'),
+  ('00000000-0000-0000-0000-00000000002b', 'minh.demo@gmail.com', 'Minh Pham'),
+  ('00000000-0000-0000-0000-000000000003', 'linh.demo@gmail.com', 'Linh Tran'),
+  ('00000000-0000-0000-0000-00000000003b', 'mai.demo@gmail.com', 'Mai Le'),
+  ('00000000-0000-0000-0000-00000000003c', 'quan.demo@gmail.com', 'Quan Do');
 
 INSERT INTO roles (code, name, description)
 VALUES
