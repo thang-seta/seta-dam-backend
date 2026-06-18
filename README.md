@@ -64,6 +64,13 @@ seta-dam-backend/
 - Docker & Docker Compose installed.
 - Node.js (for NPM commands) and Python 3.
 
+> [!IMPORTANT]
+> **Host Architecture / Platform Note (`amd64` vs `arm64`):**
+> 
+> The `flyway` service in [docker-compose.yml](docker-compose.yml) is configured with `platform: linux/amd64` by default.
+> - **On Intel/AMD Windows or Linux (AMD64)**: Use the default configuration.
+> - **On Apple Silicon (M1/M2/M3) Macs or ARM64 Windows/Linux (ARM64)**: If you experience architecture mismatch warnings or slow emulator performance, modify the `platform` setting for the `flyway` service in `docker-compose.yml` to `platform: linux/arm64`, or comment/remove the `platform` line completely to let Docker auto-detect your native host architecture.
+
 ### Recommended: Using NPM Commands (Cross-Platform)
 
 For convenience, you can manage the lifecycle of the application using NPM scripts from the root directory:
@@ -103,11 +110,11 @@ For convenience, you can manage the lifecycle of the application using NPM scrip
 
 ---
 
-### Alternative: Using Shell Scripts
+### Alternative: Using Scripts
 
-If you prefer to run the scripts directly, we provide scripts for both Linux/macOS (`.sh`) and Windows (`.bat`):
+If you prefer to run the scripts directly, we provide scripts for Linux/macOS (`.sh`) and Windows (`.bat`):
 
-| Action | Linux / macOS | Windows (CMD/PowerShell) |
+| Action | Linux / macOS | Windows (CMD / PowerShell) |
 |---|---|---|
 | **Start Services** | `./scripts/dev-up.sh` | `.\scripts\dev-up.bat` |
 | **Stop & Clean** | `./scripts/dev-down.sh` | `.\scripts\dev-down.bat` |

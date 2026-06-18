@@ -1,5 +1,5 @@
 -- demo_data.sql
--- Seed demo folders, metadata, and permissions
+-- Seed demo folders, metadata, and permissions matching current Flyway schema
 
 -- Seed folders
 INSERT INTO folders (id, name, parent_id, created_by) VALUES
@@ -17,34 +17,11 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Seed object-level permissions (folder_permissions)
 -- viewer_user (00000000-0000-0000-0000-000000000003) can READ Dataset A (11111111...)
-INSERT INTO folder_permissions (folder_id, grantee_user_id, action_id, granted_by)
-SELECT 
-  '11111111-1111-1111-1111-111111111111',
-  '00000000-0000-0000-0000-000000000003',
-  a.id,
-  '00000000-0000-0000-0000-000000000001'
-FROM permission_actions a
-WHERE a.code = 'read'::permission_action_code
-ON CONFLICT (folder_id, grantee_user_id, action_id) WHERE grantee_user_id IS NOT NULL DO NOTHING;
-
 -- editor_user (00000000-0000-0000-0000-000000000002) can WRITE and READ Dataset A
-INSERT INTO folder_permissions (folder_id, grantee_user_id, action_id, granted_by)
-SELECT 
-  '11111111-1111-1111-1111-111111111111',
-  '00000000-0000-0000-0000-000000000002',
-  a.id,
-  '00000000-0000-0000-0000-000000000001'
-FROM permission_actions a
-WHERE a.code IN ('read'::permission_action_code, 'write'::permission_action_code)
-ON CONFLICT (folder_id, grantee_user_id, action_id) WHERE grantee_user_id IS NOT NULL DO NOTHING;
-
 -- editor_user can READ Secret Dataset (33333333...) but cannot write to it
-INSERT INTO folder_permissions (folder_id, grantee_user_id, action_id, granted_by)
-SELECT 
-  '33333333-3333-3333-3333-333333333333',
-  '00000000-0000-0000-0000-000000000002',
-  a.id,
-  '00000000-0000-0000-0000-000000000001'
-FROM permission_actions a
-WHERE a.code = 'read'::permission_action_code
+INSERT INTO folder_permissions (folder_id, grantee_user_id, action_id, granted_by) VALUES
+('11111111-1111-1111-1111-111111111111', '00000000-0000-0000-0000-000000000003', (SELECT id FROM permission_actions WHERE code = 'read'), '00000000-0000-0000-0000-000000000001'),
+('11111111-1111-1111-1111-111111111111', '00000000-0000-0000-0000-000000000002', (SELECT id FROM permission_actions WHERE code = 'read'), '00000000-0000-0000-0000-000000000001'),
+('11111111-1111-1111-1111-111111111111', '00000000-0000-0000-0000-000000000002', (SELECT id FROM permission_actions WHERE code = 'write'), '00000000-0000-0000-0000-000000000001'),
+('33333333-3333-3333-3333-333333333333', '00000000-0000-0000-0000-000000000002', (SELECT id FROM permission_actions WHERE code = 'read'), '00000000-0000-0000-0000-000000000001')
 ON CONFLICT (folder_id, grantee_user_id, action_id) WHERE grantee_user_id IS NOT NULL DO NOTHING;
