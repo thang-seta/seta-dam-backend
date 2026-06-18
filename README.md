@@ -62,43 +62,61 @@ seta-dam-backend/
 
 ### Prerequisites
 - Docker & Docker Compose installed.
+- Node.js (for NPM commands) and Python 3.
 
-### 1. Start Services
-To spin up all services (Postgres, Flyway, Go backend, Node.js gateway, Prometheus, Grafana, Loki):
-```bash
-./scripts/dev-up.sh
-```
+### Recommended: Using NPM Commands (Cross-Platform)
 
-### 2. Run Database Migrations
-Migrations run automatically on startup via the Flyway service. To trigger them manually at any point:
-```bash
-./scripts/migrate.sh
-```
+For convenience, you can manage the lifecycle of the application using NPM scripts from the root directory:
 
-### 3. Load Demo Seed Data
-To load deterministic mock folders, metadata, and object-level permissions (viewer/editor restrictions):
-```bash
-./scripts/seed-demo.sh
-```
+* **Start all services in Docker**:
+  ```bash
+  npm run dev:up
+  ```
+* **Stop all services and clean DB volume**:
+  ```bash
+  npm run dev:down
+  ```
+* **Run Database Migrations manually**:
+  ```bash
+  npm run db:migrate
+  ```
+* **Load Demo Seed Data**:
+  ```bash
+  npm run db:seed
+  ```
+* **Import Open Images Metadata**:
+  ```bash
+  npm run db:import -- --limit 100
+  ```
+* **Local Hybrid Development Mode** (Starts DB in Docker, runs Go & Node.js Gateway locally with hot-reload):
+  ```bash
+  npm run dev:all
+  ```
+* **Stop all containers (without deleting volumes)**:
+  ```bash
+  npm run shut:all
+  ```
+* **View logs**:
+  ```bash
+  npm run dev:logs
+  ```
 
-### 4. Import Open Images Metadata
-To import text-only image metadata from the public Open Images V7 validation CSV files into the Docker PostgreSQL database:
-```bash
-./scripts/import-open-images-v7.py --limit 100
-```
+---
+
+### Alternative: Using Shell Scripts
+
+If you prefer to run the scripts directly, we provide scripts for both Linux/macOS (`.sh`) and Windows (`.bat`):
+
+| Action | Linux / macOS | Windows (CMD/PowerShell) |
+|---|---|---|
+| **Start Services** | `./scripts/dev-up.sh` | `.\scripts\dev-up.bat` |
+| **Stop & Clean** | `./scripts/dev-down.sh` | `.\scripts\dev-down.bat` |
+| **Run Migrations** | `./scripts/migrate.sh` | `.\scripts\migrate.bat` |
+| **Load Seed Data** | `./scripts/seed-demo.sh` | `.\scripts\seed-demo.bat` |
+| **Import Metadata** | `./scripts/import-open-images-v7.py --limit 100` | `.\scripts\import-open-images-v7.bat --limit 100` |
+| **Import Dry-run** | `./scripts/import-open-images-v7.py --limit 10 --dry-run` | `.\scripts\import-open-images-v7.bat --limit 10 --dry-run` |
 
 The importer creates an `Open Images V7 Import` root folder, creates label-based child folders, and upserts rows into `metadata_items` using `external_source = 'open_images_v7_validation'`.
-
-Preview the rows without touching Postgres:
-```bash
-./scripts/import-open-images-v7.py --limit 10 --dry-run
-```
-
-### 5. Stop Services & Clear Volumes
-To tear down the environment and wipe database volumes:
-```bash
-./scripts/dev-down.sh
-```
 
 ---
 
