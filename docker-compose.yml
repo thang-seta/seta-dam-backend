@@ -1,0 +1,90 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: seta-dam-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: setadam
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d setadam"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  flyway:
+    image: flyway/flyway:10-alpine
+    container_name: seta-dam-flyway
+    volumes:
+      - ./db/migrations:/flyway/sql
+      - ./db/seeds:/flyway/seeds
+    command: -url=jdbc:postgresql://db:5432/setadam -user=postgres -password=postgres -connectRetries=60 migrate
+    depends_on:
+      db:
+        condition: service_healthy
+
+  core-go:
+    build:
+      context: ./services/core-go
+      dockerfile: Dockerfile
+    container_name: seta-dam-core-go
+    environment:
+      - PORT=8080
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/setadam?sslmode=disable
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+      flyway:
+        condition: service_completed_successfully
+
+  graphql-node:
+    build:
+      context: ./apps/graphql-node
+      dockerfile: Dockerfile
+    container_name: seta-dam-graphql-node
+    environment:
+      - PORT=4000
+      - GO_SERVICE_URL=http://core-go:8080
+    ports:
+      - "4000:4000"
+    depends_on:
+      - core-go
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: seta-dam-prometheus
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    depends_on:
+      - core-go
+      - graphql-node
+
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: seta-dam-loki
+    volumes:
+      - ./infra/loki/loki-config.yml:/etc/loki/local-config.yaml
+    ports:
+      - "3100:3100"
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: seta-dam-grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+      - loki
+
+volumes:
+  pgdata:

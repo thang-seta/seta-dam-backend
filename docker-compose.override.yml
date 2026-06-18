@@ -1,0 +1,4 @@
+# docker-compose.override.yml
+# Use this file to define local override configurations (e.g. mounting source code volumes for live reload)
+version: '3.8'
+services: {}
