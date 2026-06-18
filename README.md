@@ -81,7 +81,20 @@ To load deterministic mock folders, metadata, and object-level permissions (view
 ./scripts/seed-demo.sh
 ```
 
-### 4. Stop Services & Clear Volumes
+### 4. Import Open Images Metadata
+To import text-only image metadata from the public Open Images V7 validation CSV files into the Docker PostgreSQL database:
+```bash
+./scripts/import-open-images-v7.py --limit 100
+```
+
+The importer creates an `Open Images V7 Import` root folder, creates label-based child folders, and upserts rows into `metadata_items` using `external_source = 'open_images_v7_validation'`.
+
+Preview the rows without touching Postgres:
+```bash
+./scripts/import-open-images-v7.py --limit 10 --dry-run
+```
+
+### 5. Stop Services & Clear Volumes
 To tear down the environment and wipe database volumes:
 ```bash
 ./scripts/dev-down.sh

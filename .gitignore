@@ -30,6 +30,9 @@ yarn-error.log*
 logs/
 *.log
 
+# Local downloaded metadata caches
+.cache/
+
 # IDE files
 .idea/
 .vscode/
